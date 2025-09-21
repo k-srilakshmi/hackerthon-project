@@ -1,0 +1,49 @@
+import matplotlib.pyplot as plt
+
+# ---------------------------
+# Data: Example water sources in rural Northeast India
+# ---------------------------
+water_categories = [
+    'Fresh Water',
+    'Drainage Water',
+    'Contaminated Water',
+    'Factory Polluted Water',
+    'Washroom/Drainage Mix'
+]
+
+water_values = [50, 15, 10, 15, 10]
+
+colors = ['#2ca02c', '#ff7f0e', '#d62728', '#9467bd', '#8c564b']
+
+# ---------------------------
+# Create Pie Chart
+# ---------------------------
+plt.figure(figsize=(10, 8))
+explode = (0.05, 0.05, 0.05, 0.05, 0.05)
+
+plt.pie(
+    water_values,
+    labels=water_categories,
+    autopct='%1.1f%%',
+    startangle=140,
+    colors=colors,
+    explode=explode,
+    shadow=True,
+    textprops={'fontsize': 12, 'weight': 'bold', 'color': 'black'}
+)
+
+plt.legend(water_categories, loc="best", fontsize=12)
+plt.axis('equal')
+plt.title('Water Resource Distribution in Rural Northeast India', fontsize=16, weight='bold')
+
+# ---------------------------
+# Save to both PNG and PDF
+# ---------------------------
+output_png = 'Rural_NE_India_Water_PieChart.png'
+output_pdf = 'Rural_NE_India_Water_PieChart.pdf'
+
+plt.savefig(output_png, dpi=300, bbox_inches='tight')
+plt.savefig(output_pdf, dpi=300, bbox_inches='tight')
+plt.close()  # Close the figure to prevent it from showing
+
+print(f"Pie chart saved as:\n- {output_png}\n- {output_pdf}")
