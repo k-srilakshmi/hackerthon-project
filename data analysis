@@ -1,0 +1,94 @@
+# =========================
+# Imports
+# =========================
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from shapely.geometry import Point, LineString
+
+# =========================
+# Step 1: Load India shapefile
+# =========================
+url = "https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson"
+gdf = gpd.read_file(url)
+
+# Filter for India
+india = gdf[gdf['name'] == 'India']
+
+# Northeast India bounding box (approximate)
+minx, miny, maxx, maxy = 90.0, 24.0, 97.0, 28.5
+
+# =========================
+# Step 2: Define villages and water sources
+# =========================
+villages = pd.DataFrame({
+    'name': ['Senvon', 'Khokon', 'Lakhüti'],
+    'lon': [93.047585, 93.996, 94.000],
+    'lat': [24.142178, 24.992, 26.000]
+})
+
+villages_gdf = gpd.GeoDataFrame(
+    villages,
+    geometry=gpd.points_from_xy(villages['lon'], villages['lat'])
+)
+
+water_sources = pd.DataFrame({
+    'name': ['Brahmaputra River', 'Barak River', 'Doyang River'],
+    'lon': [91.700, 93.000, 94.500],
+    'lat': [26.200, 25.000, 26.500],
+    'status': ['fresh', 'polluted', 'fresh']  # fresh vs polluted
+})
+
+water_gdf = gpd.GeoDataFrame(
+    water_sources,
+    geometry=gpd.points_from_xy(water_sources['lon'], water_sources['lat'])
+)
+
+# Assign colors based on status
+water_gdf['color'] = water_gdf['status'].apply(lambda x: 'green' if x == 'fresh' else 'orange')
+
+# =========================
+# Step 3: Create water connection lines
+# =========================
+lines = []
+for i, village in villages_gdf.iterrows():
+    # Connect each village to the nearest water source (simplified)
+    source = water_gdf.iloc[i % len(water_gdf)]
+    line = LineString([(village['lon'], village['lat']), (source['lon'], source['lat'])])
+    lines.append(line)
+
+lines_gdf = gpd.GeoDataFrame(geometry=lines)
+
+# =========================
+# Step 4: Plot the map
+# =========================
+fig, ax = plt.subplots(figsize=(12, 10))
+
+# Plot India and zoom into Northeast India
+india.plot(ax=ax, color='lightgreen', edgecolor='black')
+ax.set_xlim(minx, maxx)
+ax.set_ylim(miny, maxy)
+
+# Plot villages (big red points)
+villages_gdf.plot(ax=ax, color='red', markersize=200, label='Villages')
+
+# Plot water sources (green=fresh, orange=polluted)
+for status in ['fresh', 'polluted']:
+    subset = water_gdf[water_gdf['status'] == status]
+    subset.plot(ax=ax, color=subset['color'], markersize=150, label=f'Water ({status})')
+
+# Plot connection lines (blue)
+lines_gdf.plot(ax=ax, color='blue', linewidth=2, alpha=0.7, label='Water Connection')
+
+# Add labels for villages
+for x, y, label in zip(villages_gdf['lon'], villages_gdf['lat'], villages_gdf['name']):
+    ax.text(x + 0.05, y + 0.05, label, fontsize=12, color='darkred', fontweight='bold')
+
+# Add labels for water sources
+for x, y, label in zip(water_gdf['lon'], water_gdf['lat'], water_gdf['name']):
+    ax.text(x + 0.05, y + 0.05, label, fontsize=11, color='blue', fontweight='bold')
+
+# Add title and legend
+plt.title("Northeast India Villages and Water Sources with Connections", fontsize=16)
+plt.legend()
+plt.show()
